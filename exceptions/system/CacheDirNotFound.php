@@ -2,7 +2,7 @@
 
 namespace WOWAPI\EXCEPTIONS\SYSTEM;
 
-class ChacheDirNotFound extends \Exception {
+class CacheDirNotFound extends \Exception {
 
     function __construct()
     {

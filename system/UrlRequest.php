@@ -24,7 +24,7 @@ class UrlRequest
     {   
         $url = (func_get_args()) 
             ? vsprintf(self::$requestUrl, func_get_args()) 
-            : self::$requestUrl
+            : self::$requestUrl;
             
         $dataFile = CACHE_DIR . md5( $url ) . '.cache';
         
@@ -77,8 +77,8 @@ class UrlRequest
      */
     private function writeCache($file, $data)
     {
-        $cache      = fopen($cacheFile, 'w');
-        if (!fwrite($cache, $rowData))
+        $cache      = fopen($file, 'w');
+        if (!fwrite($cache, $data))
             throw new \WOWAPI\EXCEPTIONS\SYSTEM\CacheFilePermissionDenied();
         fclose($cache);
         return true;
