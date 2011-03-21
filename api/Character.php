@@ -22,15 +22,26 @@ namespace WOWAPI\API;
 
 class Character
 {
+    /**
+	 * Store overhead
+	 * @var string
+	 */
+    private $heap;
+    
+    /**
+     * @var array;
+     */
     static $storage;
     
-    function __construct($serverName, $characterName)
+    /**** Public zone ****/
+
+    public function __construct($serverName, $characterName)
     {
         $url = 'http://eu.battle.net/wow/ru/character/%s/%s/simple';
         try 
         {
             $Page       = new \WOWAPI\SYSTEM\UrlRequest($url);
-            $pageData   = $Page->load($serverName, $characterName);
+            $this->heap = $Page->load($serverName, $characterName);
         }
         catch(\Exception $e)
         {
@@ -38,11 +49,13 @@ class Character
             return false;
         }
 
-        preg_match('/Summary.Stats\(\{(.*?)\}/sm', $pageData, $sourceArray);
+        preg_match('/Summary.Stats\(\{(.*?)\}/sm', $this->heap, $sourceArray);
         preg_match_all('/\"(\S*)\"\: (\S*),/sm', $sourceArray[1], $matches);
         
         self::$storage  = array_combine(
             array_values($matches[1]), array_values($matches[2]));
+        
+        $this->loadSummaryInventory();
         
         return true;
     }
@@ -54,6 +67,44 @@ class Character
             if ($args) self::$storage[$name] = $args;
             return number_format(self::$storage[$name], 2, '.', ' ');
         }
+    }
+    
+    public function slot($number, $full = false)
+    {
+        if ( !isset(self::$storage['slot'][$number]) ) return false;
+        
+        $idItem = self::$storage['slot'][$number];
+        return ($full) ? \WOWAPI\SYSTEM\Factory::getItemData($idItem) : $idItem;
+    }
+    
+    /**** Private zone ****/
+    
+    private function loadSummaryInventory()
+    {
+        // TODO Exception if heap is empty
+        $doc = new \WOWAPI\SYSTEM\Nokogiri($this->heap);
+        $slots = $doc->get('div.summary-inventory')->toArray();
+        
+        $summaryInventory;
+        
+        foreach ($slots['div'] as $key => $slot)
+        {       
+            $item = $slot['div'][0]['div'][0]['a'][0];
+            
+            if ($item['class'] == 'empty')
+            {
+                $idItem = NULL;
+            }
+            else
+            {
+                preg_match('/i=(\d+)/', $item['data-item'], $dataItem);
+                $idItem = $dataItem[1];
+            }
+            
+            self::$storage['slot'][$slot['data-id']] = $idItem;
+        }
+        
+        return true;
     }
 }
 

@@ -1,7 +1,11 @@
 <?
 namespace WOWAPI;
 
-require __DIR__ . '/autoload.php';
-$Guild = new API\Guild( 'свежеватель-душ', 'Больничка' );
+require __DIR__ . '/wowapi.php';
 
-echo $Guild->name;
+//$Guild = new API\Guild( 'свежеватель-душ', 'Больничка' );
+//echo $Guild->name;
+$Character = new API\Character('свежеватель-душ','Чекабой');
+$Item = $Character->slot(12, true);
+var_dump($Item);
+

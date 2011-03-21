@@ -23,6 +23,8 @@ namespace WOWAPI\SYSTEM;
 class UrlRequest
 {
     static $requestUrl;
+    public $addMeta = true;
+    static $meta = '<meta http-equiv="content-type" content="text/html; charset=utf-8">';
     
     function __construct($url)
     {
@@ -40,7 +42,7 @@ class UrlRequest
      * @return string The text of the loaded page
      */
     function load()
-    {   
+    {
         $url = (func_get_args()) 
             ? vsprintf(self::$requestUrl, func_get_args()) 
             : self::$requestUrl;
@@ -53,10 +55,19 @@ class UrlRequest
         }
         else
         {
-            $rowData = file_get_contents( $url );
+            $curl = curl_init();
+            curl_setopt($curl, CURLOPT_URL, $url);
+            curl_setopt($curl, CURLOPT_HEADER, 0);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true); 
+            curl_setopt(
+                $curl, 
+                CURLOPT_HTTPHEADER, 
+                array('Content-type: text/xml;charset="utf-8"')
+            ); 
+            $rowData = curl_exec($curl); 
             $this->writeCache($dataFile, $rowData);
         }
-
+        $rowData = ($this->addMeta) ? self::$meta . $rowData : $rowData;
         return $rowData;
     }
     
