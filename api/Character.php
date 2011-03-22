@@ -20,21 +20,53 @@
 
 namespace WOWAPI\API;
 
+/**
+ * Class receives the data character. Most of the values ​​
+ * contained in $storage. Access to individual characteristics 
+ * can be obtained by calling it as a function, such as health()
+ *
+ * Equipment is stored in $storage['slot']. This is a general 
+ * store, where the ID items. If you want to get the item in 
+ * a separate slot , use the slot( slot_number [ ,true if you 
+ * want to download full details of item ])
+ *
+ * Examples:
+ * 
+ * This is a common way to call the class
+ * $Character = new \WOWAPI\API\Character('server-name', 'character-name');
+ *
+ * Health characters
+ * $Character->health();
+ * 
+ * $Character->slot(12); // Item ID in 12 slot
+ * $Character->slot(12, true); // Full information about the item taken from the site wowhead.com
+ *
+ */
 class Character
 {
     /**
 	 * Store overhead
+	 *
 	 * @var string
 	 */
     private $heap;
     
     /**
+     * Shared storage
+     *
      * @var array;
      */
     static $storage;
     
     /**** Public zone ****/
 
+    /**
+     * Character constructor
+     *
+     * @param $serverName The name of the server where the character
+     * @param $characterName The name of the character data which is necessary to obtain
+     *
+     */
     public function __construct($serverName, $characterName)
     {
         $url = 'http://eu.battle.net/wow/ru/character/%s/%s/simple';
@@ -60,6 +92,9 @@ class Character
         return true;
     }
     
+    /**
+     * This magical method provides access to any parameter of the character
+     */
     public function __call($name, $args)
     {
         if (isset(self::$storage[$name]))
@@ -69,19 +104,28 @@ class Character
         }
     }
     
+    /**
+     * Method returns either the number or complete information 
+     * about the items that wears on a character in a certain slot.
+     
+     * @param $number Slot number
+     * @param $full true|false Flag to request information about the item
+     */
     public function slot($number, $full = false)
     {
         if ( !isset(self::$storage['slot'][$number]) ) return false;
         
         $idItem = self::$storage['slot'][$number];
-        return ($full) ? \WOWAPI\SYSTEM\Factory::getItemData($idItem) : $idItem;
+        return ($full) ? \WOWAPI\API\Item($idItem) : $idItem;
     }
     
     /**** Private zone ****/
     
+    /**
+     * Systemic treatment of items worn by characters
+     */
     private function loadSummaryInventory()
     {
-        // TODO Exception if heap is empty
         $doc = new \WOWAPI\SYSTEM\Nokogiri($this->heap);
         $slots = $doc->get('div.summary-inventory')->toArray();
         

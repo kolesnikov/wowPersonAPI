@@ -18,11 +18,11 @@
  * 
  */
 
-namespace WOWAPI\SYSTEM;
+namespace WOWAPI\API;
 
-class Factory
+class Item
 {
-    static function getItemData($Item)
+    function __construct($Item)
     {
         if (intval($Item) > 0)
         {

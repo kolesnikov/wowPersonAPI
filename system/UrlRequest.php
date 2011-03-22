@@ -20,12 +20,40 @@
 
 namespace WOWAPI\SYSTEM;
 
+/**
+ * This class provides the ability to retrieve pages from the original data
+ *
+ */
 class UrlRequest
 {
+    /**
+     * Store the template addresses a remote page
+     *
+     * @var String
+     */
     static $requestUrl;
+    
+    /**
+     * Determines whether to add the title to the grant for the correct 
+     * character set definition
+     *
+     * @var Bool
+     */
     public $addMeta = true;
+    
+    /**
+     * Header helps to define the encoding for DOM
+     *
+     * @var String
+     */
     static $meta = '<meta http-equiv="content-type" content="text/html; charset=utf-8">';
     
+    
+    /**
+     * UrlRequest constructor
+     * 
+     * @var String Template page address
+     */
     function __construct($url)
     {
         if ( !is_dir(CACHE_DIR) )
@@ -35,11 +63,10 @@ class UrlRequest
     }
     
     /**
-     *
      * Loads the specified page with the parameter passed
      *
      * @param Any number of variables, or nothing at all
-     * @return string The text of the loaded page
+     * @return String The text of the loaded page
      */
     function load()
     {
@@ -72,6 +99,7 @@ class UrlRequest
     }
     
     /**
+     * Method that determines the relevance of the cache
      *
      * @param string $file The path to the file
      * @return boolean Whether the cache is valid
@@ -101,6 +129,7 @@ class UrlRequest
     }
 
     /**
+     * The method of writing data into the cache file
      *
      * @param string $file The path to the cache file
      * @param string $data Data to write
