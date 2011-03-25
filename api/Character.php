@@ -51,6 +51,8 @@ class Character
 	 */
     private $heap;
     
+    private $doc;
+    
     /**
      * Shared storage
      *
@@ -80,15 +82,13 @@ class Character
             echo $e->getMessage();
             return false;
         }
-
-        preg_match('/Summary.Stats\(\{(.*?)\}/sm', $this->heap, $sourceArray);
-        preg_match_all('/\"(\S*)\"\: (\S*),/sm', $sourceArray[1], $matches);
         
-        self::$storage  = array_combine(
-            array_values($matches[1]), array_values($matches[2]));
+        $this->doc = new \WOWAPI\SYSTEM\Nokogiri($this->heap);
         
+        $this->loadBase();
+        $this->loadSecondary();
         $this->loadSummaryInventory();
-        
+        $this->loadSummaryTalents();
         return true;
     }
     
@@ -97,10 +97,10 @@ class Character
      */
     public function __call($name, $args)
     {
-        if (isset(self::$storage[$name]))
+        if (isset(static::$storage[$name]))
         {
-            if ($args) self::$storage[$name] = $args;
-            return number_format(self::$storage[$name], 2, '.', ' ');
+            if ($args) static::$storage[$name] = $args;
+            return static::$storage[$name];
         }
     }
     
@@ -122,14 +122,66 @@ class Character
     /**** Private zone ****/
     
     /**
+     *
+     */
+    private function loadBase()
+    {
+        list(,,static::$storage['race'])  = array_values($this->doc->get('a.race')->toArray());
+        list(,,static::$storage['class']) = array_values($this->doc->get('a.class')->toArray());
+        list(,,static::$storage['spec'])  = array_values($this->doc->get('a.spec')->toArray());
+        $level = array_values($this->doc->get('span.level')->toArray());
+        static::$storage['level'] = $level[1]['#text'];
+        
+        return true;
+    }
+    
+    /**
+     * 
+     */
+    private function loadSecondary()
+    {
+        preg_match('/Summary.Stats\(\{(.*?)\}/sm', $this->heap, $sourceArray);
+        preg_match_all('/\"(\S*)\"\: (\S*),/sm', $sourceArray[1], $matches);
+
+        static::$storage  = array_combine(
+            array_values($matches[1]), array_values($matches[2]));
+            
+        return true;
+    }
+    
+    private function loadSummaryTalents()
+    {
+        $talents = $this->doc->get('#summary-talents')->toArray();
+        foreach ($talents['ul'][0]['li'] as $talent)
+        {
+            if ( count($talent['a'][0]['span']['span']) < 3) continue;
+            
+            $type = strpos($talent['a'][0]['href'], 'primary') ? 'primary' : 'secondary';
+            
+            foreach ($talent['a'][0]['span']['span'] as $prop)
+            {
+                switch ($prop['class'])
+                {
+                    case 'roles':
+                        $role = str_replace('icon-', '', $prop['span'][0]['class']);
+                        break;
+                        
+                    case 'name-build':
+                        $name = $prop['span'][0]['#text'];
+                        break;
+                }
+            }
+            static::$storage['talents'][$type] = array($name, $role);
+        }        
+        return true;
+    }
+    
+    /**
      * Systemic treatment of items worn by characters
      */
     private function loadSummaryInventory()
     {
-        $doc = new \WOWAPI\SYSTEM\Nokogiri($this->heap);
-        $slots = $doc->get('div.summary-inventory')->toArray();
-        
-        $summaryInventory;
+        $slots = $this->doc->get('div.summary-inventory')->toArray();
         
         foreach ($slots['div'] as $key => $slot)
         {       

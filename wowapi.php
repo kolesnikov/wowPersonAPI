@@ -16,3 +16,8 @@ $autoload = function ($class) {
 
 spl_autoload_register($autoload);
 require __DIR__ . '/settings.php';
+
+function debug($var)
+{
+    echo PHP_EOL . print_r($var) . PHP_EOL; 
+}
